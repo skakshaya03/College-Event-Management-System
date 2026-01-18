@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration - College Event Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="welcome">
+                <h2>Event Registration Form</h2>
+                <p id="eventTitle"></p>
+            </div>
+            <button class="btn-secondary" onclick="window.location.href='student_dashboard.html'">Back to Dashboard</button>
+        </div>
+
+        <div id="message"></div>
+
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 20px auto;">
+            <h3>Register for Event</h3>
+            <form id="registrationForm" onsubmit="submitRegistration(event)">
+                <input type="hidden" id="eventId" name="eventId">
+                
+                <div class="form-group">
+                    <label for="fullName">Full Name *</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" placeholder="10-digit number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Department *</label>
+                    <select id="department" name="department" required>
+                        <option value="">Select Department</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Mechanical">Mechanical</option>
+                        <option value="Civil">Civil</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="year">Year of Study *</label>
+                    <select id="year" name="year" required>
+                        <option value="">Select Year</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Why do you want to attend this event? *</label>
+                    <textarea id="reason" name="reason" rows="4" required placeholder="Tell us your motivation..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="terms" required>
+                        I agree to attend the event and follow all guidelines
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-success" style="width: 100%; padding: 12px;">Submit Registration</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const eventId = params.get('eventId');
+        const eventTitle = params.get('eventTitle') || 'Event';
+
+        if (!eventId) {
+            window.location.href = 'student_dashboard.html';
+        }
+
+        document.getElementById('eventId').value = eventId;
+        document.getElementById('eventTitle').textContent = `Registering for: ${decodeURIComponent(eventTitle)}`;
+
+        async function submitRegistration(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('registerEvent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data)
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    const result = await response.text();
+                    if (result.includes('success')) {
+                        window.location.href = 'student_dashboard.html?success=registered';
+                    } else {
+                        document.getElementById('message').innerHTML = 
+                            '<div class="message error">Registration failed. Please try again.</div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('message').innerHTML = 
+                    '<div class="message error">An error occurred. Please try again.</div>';
+            }
+        }
+    </script>
+</body>
+</html>

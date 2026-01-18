@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Event Organizer</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="welcome">
+                <h2>User Management</h2>
+                <p>View all registrations for your events</p>
+            </div>
+            <div>
+                <button class="btn-secondary" onclick="window.location.href='organizer_dashboard.html'">Back to Dashboard</button>
+                <button class="btn-secondary" onclick="logout()" style="margin-left: 10px;">Logout</button>
+            </div>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <h2>All Registrations</h2>
+            <div id="registrationsList"></div>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            window.location.href = 'logout';
+        }
+
+        async function loadAllRegistrations() {
+            try {
+                const response = await fetch('getAllRegistrations');
+                const data = await response.json();
+                
+                const regList = document.getElementById('registrationsList');
+                
+                if (data.length === 0) {
+                    regList.innerHTML = '<p style="color: #666;">No registrations yet for your events.</p>';
+                    return;
+                }
+
+                // Group registrations by event
+                const groupedByEvent = {};
+                data.forEach(reg => {
+                    if (!groupedByEvent[reg.eventTitle]) {
+                        groupedByEvent[reg.eventTitle] = [];
+                    }
+                    groupedByEvent[reg.eventTitle].push(reg);
+                });
+
+                let html = '';
+                for (const eventTitle in groupedByEvent) {
+                    const registrations = groupedByEvent[eventTitle];
+                    html += `
+                        <div style="margin-bottom: 30px;">
+                            <h3 style="color: #7c3aed; border-bottom: 2px solid #7c3aed; padding-bottom: 10px;">
+                                ${eventTitle} (${registrations.length} registrations)
+                            </h3>
+                            <table style="width: 100%; margin-top: 15px;">
+                                <thead>
+                                    <tr>
+                                        <th>Student Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Year</th>
+                                        <th>Phone</th>
+                                        <th>Registered At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    registrations.forEach(reg => {
+                        html += `
+                            <tr>
+                                <td>${reg.fullName}</td>
+                                <td>${reg.email}</td>
+                                <td>${reg.department || 'N/A'}</td>
+                                <td>${reg.year || 'N/A'}</td>
+                                <td>${reg.phone || 'N/A'}</td>
+                                <td>${new Date(reg.registeredAt).toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                regList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading registrations:', error);
+                document.getElementById('registrationsList').innerHTML = 
+                    '<p style="color: red;">Error loading registrations. Please try again.</p>';
+            }
+        }
+
+        loadAllRegistrations();
+    </script>
+</body>
+</html>

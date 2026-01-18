@@ -1,0 +1,8 @@
+target/
+node_modules/
+__MACOSX/
+*.DS_Store
+*.db
+.env
+.idea/
+.vscode/

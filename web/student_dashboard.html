@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - College Event Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="welcome">
+                <h2>Student Dashboard</h2>
+                <p id="welcomeMsg"></p>
+            </div>
+            <button class="btn-secondary" onclick="logout()">Logout</button>
+        </div>
+
+        <div id="message"></div>
+
+        <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h2>My Registered Events</h2>
+            <div id="myRegistrations"></div>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 10px;">
+            <h2>Approved Events</h2>
+            <div id="eventsList"></div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span class="close" onclick="closeQRModal()">&times;</span>
+            <h2>Event QR Code</h2>
+            <p id="qrEventName" style="color: #667eea; font-weight: bold; margin: 10px 0;"></p>
+            <img id="qrImage" src="" alt="QR Code" style="max-width: 300px; margin: 20px auto; display: block;">
+            <p style="color: #666; font-size: 14px;">Scan this QR code to view event details</p>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            window.location.href = 'logout';
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        function showQR(eventId, eventTitle) {
+            document.getElementById('qrEventName').textContent = eventTitle;
+            document.getElementById('qrImage').src = 'generateQR?eventId=' + eventId;
+            document.getElementById('qrModal').style.display = 'block';
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const msg = document.getElementById('message');
+        
+        if (params.get('success') === 'registered') {
+            msg.innerHTML = '<div class="message success">Successfully registered for the event!</div>';
+        } else if (params.get('error') === 'already') {
+            msg.innerHTML = '<div class="message error">You are already registered for this event.</div>';
+        }
+
+        async function loadMyRegistrations() {
+            try {
+                const response = await fetch('getMyRegistrations');
+                const registrations = await response.json();
+                
+                const regList = document.getElementById('myRegistrations');
+                
+                if (registrations.length === 0) {
+                    regList.innerHTML = '<p style="color: #666;">You have not registered for any events yet.</p>';
+                    return;
+                }
+                
+                let html = '';
+                registrations.forEach(reg => {
+                    html += `
+                        <div class="event-card" style="border-left: 4px solid #28a745;">
+                            <h3>${reg.title} <span class="status-badge" style="background: #28a745; color: white;">REGISTERED</span></h3>
+                            <p class="event-info"><strong>Description:</strong> ${reg.description}</p>
+                            <p class="event-info"><strong>Date:</strong> ${reg.eventDate}</p>
+                            <p class="event-info"><strong>Venue:</strong> ${reg.venue}</p>
+                            <p class="event-info"><strong>Organized by:</strong> ${reg.organizerName}</p>
+                            <div class="action-buttons">
+                                <button class="btn-primary" onclick="showQR(${reg.id}, '${reg.title}')">
+                                    📱 View QR Code
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                regList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading registrations:', error);
+            }
+        }
+
+        async function loadEvents() {
+            try {
+                const response = await fetch('getEvents');
+                const events = await response.json();
+                
+                // Get registered event IDs
+                const regResponse = await fetch('getMyRegistrations');
+                const registrations = await regResponse.json();
+                const registeredEventIds = new Set(registrations.map(r => r.id));
+                
+                const eventsList = document.getElementById('eventsList');
+                
+                if (events.length === 0) {
+                    eventsList.innerHTML = '<p style="color: #666;">No approved events available at the moment.</p>';
+                    return;
+                }
+                
+                let html = '';
+                events.forEach(event => {
+                    const isRegistered = registeredEventIds.has(event.id);
+                    html += `
+                        <div class="event-card" style="${isRegistered ? 'opacity: 0.6; border-left: 4px solid #28a745;' : ''}">
+                            <h3>${event.title} ${isRegistered ? '<span class="status-badge" style="background: #28a745; color: white;">ALREADY REGISTERED</span>' : ''}</h3>
+                            <p class="event-info"><strong>Description:</strong> ${event.description}</p>
+                            <p class="event-info"><strong>Date:</strong> ${event.eventDate}</p>
+                            <p class="event-info"><strong>Venue:</strong> ${event.venue}</p>
+                            <p class="event-info"><strong>Organized by:</strong> ${event.organizerName}</p>
+                            <div class="action-buttons">
+                                ${isRegistered ? 
+                                    '<button class="btn-secondary" disabled style="cursor: not-allowed;">Already Registered</button>' :
+                                    `<button class="btn-success" onclick="window.location.href='event_registration.html?eventId=${event.id}&eventTitle=' + encodeURIComponent('${event.title}')">Register for Event</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                eventsList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading events:', error);
+            }
+        }
+
+        loadMyRegistrations();
+        loadEvents();
+    </script>
+</body>
+</html>

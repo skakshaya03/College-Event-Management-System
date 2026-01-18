@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - College Event Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Register</h1>
+        <div id="message"></div>
+        <form action="register" method="POST">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" name="fullName" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Register as</label>
+                <select id="role" name="role" required onchange="toggleStudentFields()">
+                    <option value="student">Student</option>
+                    <option value="organizer">Event Organizer</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            
+            <!-- Student-specific fields -->
+            <div id="studentFields" style="display: block;">
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" placeholder="e.g., Computer Science">
+                </div>
+                <div class="form-group">
+                    <label for="year">Year of Study</label>
+                    <select id="year" name="year">
+                        <option value="">Select Year</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" placeholder="+91 1234567890">
+                </div>
+            </div>
+            
+            <button type="submit">Register</button>
+        </form>
+        <div class="links">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const msg = document.getElementById('message');
+        
+        if (params.get('error') === 'exists') {
+            msg.innerHTML = '<div class="message error">Username or email already exists</div>';
+        } else if (params.get('error') === 'failed') {
+            msg.innerHTML = '<div class="message error">Registration failed. Please try again.</div>';
+        }
+        
+        function toggleStudentFields() {
+            const role = document.getElementById('role').value;
+            const studentFields = document.getElementById('studentFields');
+            const deptField = document.getElementById('department');
+            const yearField = document.getElementById('year');
+            const phoneField = document.getElementById('phone');
+            
+            if (role === 'student') {
+                studentFields.style.display = 'block';
+                deptField.required = true;
+                yearField.required = true;
+                phoneField.required = true;
+            } else {
+                studentFields.style.display = 'none';
+                deptField.required = false;
+                yearField.required = false;
+                phoneField.required = false;
+                deptField.value = '';
+                yearField.value = '';
+                phoneField.value = '';
+            }
+        }
+        
+        // Initialize on page load
+        toggleStudentFields();
+    </script>
+</body>
+</html>
